@@ -1,28 +1,50 @@
-import React from "react";
-import { View, Text, StyleSheet, FlatList, Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, FlatList, Image, ActivityIndicator } from "react-native";
 import { Card, Button } from "@rneui/base";
-
-const products = [
-  { id: "1", image: "https://via.placeholder.com/300x150", name: "Producto 1", price: 100, stock: 10 },
-  { id: "2", image: "https://via.placeholder.com/300x150", name: "Producto 2", price: 200, stock: 5 },
-  { id: "3", image: "https://via.placeholder.com/300x150", name: "Producto 3", price: 150, stock: 8 },
-  { id: "4", image: "https://via.placeholder.com/300x150", name: "Producto 4", price: 250, stock: 3 },
-];
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../config/firebaseConnection";
 
 export default function CatalogScreen() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "products"));
+        const productList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setProducts(productList);
+      } catch (error) {
+        console.error("Error fetching products: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Cargando Productos...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
+        numColumns={2}
         renderItem={({ item }) => (
           <Card containerStyle={styles.card}>
-            {/* Se corrigió la estructura del source */}
             <Image source={{ uri: item.image }} style={styles.productImage} />
             <Text style={styles.name}>{item.name}</Text>
             <Text style={styles.price}>Precio: ${item.price}</Text>
             <Text style={styles.stock}>Stock: {item.stock} unidades</Text>
-            <Button title="🛒 Agregar al carrito" onPress={() => {}} buttonStyle={styles.button} />
+            <Button title="Agregar al carrito" onPress={() => {}} buttonStyle={styles.button} />
           </Card>
         )}
       />
@@ -32,10 +54,11 @@ export default function CatalogScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f5f5", padding: 10 },
-  card: { borderRadius: 10, padding: 15, shadowColor: "#000" },
-  name: { fontSize: 18, fontWeight: "bold" },
-  price: { fontSize: 16, color: "green" },
-  stock: { fontSize: 14, color: "gray", marginBottom: 10 },
-  productImage: { width: "100%", height: 150, borderRadius: 10, marginBottom: 10, resizeMode: "cover" },
-  button: { borderRadius: 10, backgroundColor: "#109075" }
+  loaderContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  card: { flex: 1, margin: 5, borderRadius: 10, padding: 15 },
+  name: { fontSize: 16, fontWeight: "bold", textAlign: "center" },
+  price: { fontSize: 14, color: "green", textAlign: "center" },
+  stock: { fontSize: 12, color: "gray", textAlign: "center", marginBottom: 10 },
+  productImage: { width: "100%", height: 100, borderRadius: 10, resizeMode: "cover" },
+  button: { borderRadius: 10, backgroundColor: "#109075" },
 });

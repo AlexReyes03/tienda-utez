@@ -8,7 +8,7 @@ export default function AuthScreen({ navigation }) {
   
   return (
     <View style={styles.container}>
-      <AuthForm isLogin={isLogin} navigation={navigation} /> {/* <-- Pasa navigation a AuthForm */}
+      <AuthForm isLogin={isLogin} navigation={navigation} />
       <AuthSwitcher isLogin={isLogin} setIsLogin={setIsLogin} />
     </View>
   );
